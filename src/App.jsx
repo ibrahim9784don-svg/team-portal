@@ -219,7 +219,7 @@ function Avatar({ name, color = "bg-blue-600", size = "w-9 h-9" }) {
 }
 
 function Card({ children, className = "" }) {
-  return <div className={`bg-white rounded-xl border border-slate-200 shadow-sm ${className}`}>{children}</div>;
+  return <div className={`bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow duration-200 ${className}`}>{children}</div>;
 }
 
 function StatCard({ label, value, icon, accent = "bg-blue-50 text-blue-600", sub }) {
@@ -462,11 +462,11 @@ function Sidebar({ currentUser, activeView, setActiveView, open, setOpen, onLogo
           open ? "translate-x-0" : "-translate-x-full"
         } md:translate-x-0`}
       >
-        <div className="h-16 flex items-center gap-2 px-5 border-b border-slate-200 flex-shrink-0">
-          <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center">
+        <div className="h-16 flex items-center gap-2.5 px-5 border-b border-slate-200 flex-shrink-0">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-sm shadow-blue-200">
             <Icon name="store" className="w-4.5 h-4.5 text-white" />
           </div>
-          <span className="font-bold text-slate-800 text-sm leading-tight">Team Portal</span>
+          <span className="font-bold text-slate-800 text-sm leading-tight tracking-tight">Team Portal</span>
           <button className="ml-auto md:hidden text-slate-400" onClick={() => setOpen(false)}>
             <Icon name="x" className="w-5 h-5" />
           </button>
@@ -482,11 +482,11 @@ function Sidebar({ currentUser, activeView, setActiveView, open, setOpen, onLogo
                   setActiveView(item.id);
                   setOpen(false);
                 }}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition ${
-                  active ? "bg-blue-50 text-blue-700" : "text-slate-600 hover:bg-slate-50"
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 ${
+                  active ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-sm shadow-blue-200" : "text-slate-600 hover:bg-slate-50"
                 }`}
               >
-                <Icon name={item.icon} className={`w-4.5 h-4.5 ${active ? "text-blue-600" : "text-slate-400"}`} />
+                <Icon name={item.icon} className={`w-4.5 h-4.5 ${active ? "text-white" : "text-slate-400"}`} />
                 {item.label}
               </button>
             );
@@ -814,11 +814,10 @@ function ClientsView({ currentUser, clients, tasks, users, updateClients, isAdmi
   const [confirmDelete, setConfirmDelete] = useState(null);
 
   const visibleClients = useMemo(() => {
+    // Team members can see every client the admin has added (read-only) so
+    // they always have store/context info handy, not just clients they
+    // currently have a task on.
     let list = clients;
-    if (!isAdmin) {
-      const myClientIds = new Set(tasks.filter((t) => t.assignedTo === currentUser.id).map((t) => t.clientId));
-      list = list.filter((c) => myClientIds.has(c.id));
-    }
     if (statusFilter !== "All") list = list.filter((c) => c.status === statusFilter);
     if (search.trim()) {
       const q = search.trim().toLowerCase();
@@ -897,7 +896,25 @@ function ClientsView({ currentUser, clients, tasks, users, updateClients, isAdmi
                     </td>
                     <td className="px-5 py-3 text-slate-600">{c.platform}</td>
                     <td className="px-5 py-3 text-slate-600">{currency(c.monthlySpend)}</td>
-                    <td className="px-5 py-3"><StatusBadge status={c.status} /></td>
+                    <td className="px-5 py-3">
+                      {isAdmin ? (
+                        <select
+                          value={c.status}
+                          onClick={(e) => e.stopPropagation()}
+                          onChange={(e) => updateClients((list) => list.map((x) => (x.id === c.id ? { ...x, status: e.target.value } : x)))}
+                          className={`text-xs font-medium rounded-full px-2.5 py-1 border-0 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-200 ${
+                            { New: "bg-violet-50 text-violet-700", Active: "bg-emerald-50 text-emerald-700", "On Hold": "bg-amber-50 text-amber-700", Completed: "bg-slate-100 text-slate-600" }[c.status] ||
+                            "bg-slate-100 text-slate-600"
+                          }`}
+                        >
+                          {CLIENT_STATUSES.map((s) => (
+                            <option key={s} value={s}>{s}</option>
+                          ))}
+                        </select>
+                      ) : (
+                        <StatusBadge status={c.status} />
+                      )}
+                    </td>
                     <td className="px-5 py-3">
                       <div className="flex justify-end gap-1">
                         <IconButton icon="eye" label="View" onClick={() => setViewing(c)} />
@@ -1551,12 +1568,35 @@ const VIEW_META = {
   settings: { title: "Settings", subtitle: "Manage your account" },
 };
 
+const SESSION_KEY = "ecom_team_portal_session_v1";
+
 export default function App() {
   const [data, setData] = useState({ users: DEFAULT_USERS, clients: DEFAULT_CLIENTS, tasks: DEFAULT_TASKS });
   const [loading, setLoading] = useState(true);
+  // Restore the logged-in user's id from localStorage so a page refresh
+  // doesn't log them out. We only store the id, and re-resolve the full
+  // user record once data has loaded from Supabase (below).
   const [currentUser, setCurrentUser] = useState(null);
+  const [sessionChecked, setSessionChecked] = useState(false);
   const [activeView, setActiveView] = useState("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  function login(user) {
+    setCurrentUser(user);
+    try {
+      localStorage.setItem(SESSION_KEY, user.id);
+    } catch (e) {
+      /* ignore storage errors */
+    }
+  }
+  function logout() {
+    setCurrentUser(null);
+    try {
+      localStorage.removeItem(SESSION_KEY);
+    } catch (e) {
+      /* ignore storage errors */
+    }
+  }
 
   // Initial load from Supabase. If no row exists yet, seed it with the
   // sample data so the portal has something to show on first run.
@@ -1565,13 +1605,28 @@ export default function App() {
     (async () => {
       const remote = await loadData();
       if (cancelled) return;
+      let finalData;
       if (remote) {
+        finalData = remote;
         setData(remote);
       } else {
-        const seed = { users: DEFAULT_USERS, clients: DEFAULT_CLIENTS, tasks: DEFAULT_TASKS };
-        setData(seed);
-        await saveData(seed);
+        finalData = { users: DEFAULT_USERS, clients: DEFAULT_CLIENTS, tasks: DEFAULT_TASKS };
+        setData(finalData);
+        await saveData(finalData);
       }
+      // Re-log the user in from the saved session id, now that we have
+      // the real user list loaded from Supabase.
+      try {
+        const savedId = localStorage.getItem(SESSION_KEY);
+        if (savedId) {
+          const match = finalData.users.find((u) => u.id === savedId);
+          if (match) setCurrentUser(match);
+          else localStorage.removeItem(SESSION_KEY);
+        }
+      } catch (e) {
+        /* ignore storage errors */
+      }
+      setSessionChecked(true);
       setLoading(false);
     })();
     return () => {
@@ -1619,7 +1674,7 @@ export default function App() {
   }
 
   if (!currentUser) {
-    return <LoginScreen users={data.users} onLogin={setCurrentUser} />;
+    return <LoginScreen users={data.users} onLogin={login} />;
   }
 
   const isAdmin = currentUser.role === "admin";
@@ -1629,7 +1684,7 @@ export default function App() {
 
   return (
     <div className="flex h-screen bg-slate-50 text-slate-800 antialiased overflow-hidden">
-      <Sidebar currentUser={currentUser} activeView={view} setActiveView={setActiveView} open={sidebarOpen} setOpen={setSidebarOpen} onLogout={() => setCurrentUser(null)} />
+      <Sidebar currentUser={currentUser} activeView={view} setActiveView={setActiveView} open={sidebarOpen} setOpen={setSidebarOpen} onLogout={logout} />
 
       <div className="flex-1 flex flex-col min-w-0">
         <Topbar title={meta.title} subtitle={meta.subtitle} onMenuClick={() => setSidebarOpen(true)} currentUser={currentUser} />
