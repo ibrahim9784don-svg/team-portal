@@ -222,16 +222,27 @@ function Card({ children, className = "" }) {
   return <div className={`bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow duration-200 ${className}`}>{children}</div>;
 }
 
-function StatCard({ label, value, icon, accent = "bg-blue-50 text-blue-600", sub }) {
+const STAT_GRADIENTS = {
+  blue: "from-blue-600 to-indigo-600",
+  violet: "from-violet-600 to-purple-600",
+  amber: "from-amber-500 to-orange-600",
+  emerald: "from-emerald-500 to-teal-600",
+  pink: "from-pink-500 to-rose-600",
+  cyan: "from-cyan-500 to-blue-600",
+};
+
+function StatCard({ label, value, icon, gradient = "blue", sub }) {
   return (
-    <Card className="p-4 sm:p-5">
-      <div className="flex items-start justify-between">
+    <Card className={`relative overflow-hidden p-4 sm:p-5 bg-gradient-to-br ${STAT_GRADIENTS[gradient] || STAT_GRADIENTS.blue} border-0 shadow-lg`}>
+      <div className="absolute -right-4 -top-4 w-24 h-24 rounded-full bg-white/10" />
+      <div className="absolute -right-8 -bottom-8 w-20 h-20 rounded-full bg-white/10" />
+      <div className="relative flex items-start justify-between">
         <div className="min-w-0">
-          <p className="text-xs sm:text-sm text-slate-500 font-medium truncate">{label}</p>
-          <p className="text-2xl sm:text-3xl font-bold text-slate-800 mt-1">{value}</p>
-          {sub && <p className="text-xs text-slate-400 mt-1">{sub}</p>}
+          <p className="text-xs sm:text-sm text-white/80 font-medium truncate">{label}</p>
+          <p className="text-2xl sm:text-3xl font-extrabold text-white mt-1 tracking-tight">{value}</p>
+          {sub && <p className="text-xs text-white/70 mt-1">{sub}</p>}
         </div>
-        <div className={`${accent} w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0`}>
+        <div className="bg-white/20 backdrop-blur-sm w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 text-white">
           <Icon name={icon} className="w-5 h-5" />
         </div>
       </div>
@@ -554,10 +565,10 @@ function AdminDashboard({ clients, tasks, users, setActiveView }) {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <StatCard label="Total Clients" value={clients.length} icon="store" sub={`${activeClients} active`} />
-        <StatCard label="Team Members" value={teamMembers.length} icon="team" accent="bg-violet-50 text-violet-600" />
-        <StatCard label="Open Tasks" value={pending + inProgress} icon="tasks" accent="bg-amber-50 text-amber-600" sub={`${pending} pending · ${inProgress} in progress`} />
-        <StatCard label="Monthly Ad Spend" value={currency(totalSpend)} icon="dollar" accent="bg-emerald-50 text-emerald-600" />
+        <StatCard label="Total Clients" value={clients.length} icon="store" gradient="blue" sub={`${activeClients} active`} />
+        <StatCard label="Team Members" value={teamMembers.length} icon="team" gradient="violet" />
+        <StatCard label="Open Tasks" value={pending + inProgress} icon="tasks" gradient="amber" sub={`${pending} pending · ${inProgress} in progress`} />
+        <StatCard label="Monthly Ad Spend" value={currency(totalSpend)} icon="dollar" gradient="emerald" />
       </div>
 
       <div className="grid lg:grid-cols-3 gap-4 sm:gap-6">
@@ -567,15 +578,15 @@ function AdminDashboard({ clients, tasks, users, setActiveView }) {
             <span className="text-sm text-slate-400">{completed}/{tasks.length} tasks completed</span>
           </div>
           <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden">
-            <div className="h-full bg-blue-600 rounded-full transition-all" style={{ width: `${progressPct}%` }} />
+            <div className="h-full bg-gradient-to-r from-blue-600 via-indigo-500 to-violet-500 rounded-full transition-all" style={{ width: `${progressPct}%` }} />
           </div>
           <div className="grid grid-cols-3 gap-3 mt-5">
             {[
-              { label: "Pending", value: pending, color: "text-slate-500" },
-              { label: "In Progress", value: inProgress, color: "text-blue-600" },
-              { label: "Completed", value: completed, color: "text-emerald-600" },
+              { label: "Pending", value: pending, color: "text-slate-500", ring: "border-slate-200" },
+              { label: "In Progress", value: inProgress, color: "text-blue-600", ring: "border-blue-200 bg-blue-50/40" },
+              { label: "Completed", value: completed, color: "text-emerald-600", ring: "border-emerald-200 bg-emerald-50/40" },
             ].map((s) => (
-              <div key={s.label} className="text-center border border-slate-100 rounded-lg py-3">
+              <div key={s.label} className={`text-center border rounded-lg py-3 ${s.ring}`}>
                 <p className={`text-xl font-bold ${s.color}`}>{s.value}</p>
                 <p className="text-xs text-slate-400 mt-0.5">{s.label}</p>
               </div>
@@ -645,10 +656,10 @@ function TeamDashboard({ currentUser, clients, tasks, setActiveView }) {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <StatCard label="My Clients" value={myClients.length} icon="store" />
-        <StatCard label="Pending" value={pending} icon="tasks" accent="bg-slate-100 text-slate-500" />
-        <StatCard label="In Progress" value={inProgress} icon="tasks" accent="bg-blue-50 text-blue-600" />
-        <StatCard label="Completed" value={completed} icon="check" accent="bg-emerald-50 text-emerald-600" />
+        <StatCard label="My Clients" value={myClients.length} icon="store" gradient="blue" />
+        <StatCard label="Pending" value={pending} icon="tasks" gradient="pink" />
+        <StatCard label="In Progress" value={inProgress} icon="tasks" gradient="cyan" />
+        <StatCard label="Completed" value={completed} icon="check" gradient="emerald" />
       </div>
 
       <div className="grid lg:grid-cols-2 gap-4 sm:gap-6">
@@ -1439,10 +1450,10 @@ function AnalyticsView({ clients, tasks, users }) {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <StatCard label="Total Tasks" value={tasks.length} icon="tasks" />
-        <StatCard label="Completion Rate" value={`${tasks.length ? Math.round((tasks.filter((t) => t.status === "Completed").length / tasks.length) * 100) : 0}%`} icon="check" accent="bg-emerald-50 text-emerald-600" />
-        <StatCard label="Active Clients" value={clients.filter((c) => c.status === "Active").length} icon="store" accent="bg-violet-50 text-violet-600" />
-        <StatCard label="Total Ad Spend" value={currency(totalSpend)} icon="dollar" accent="bg-amber-50 text-amber-600" />
+        <StatCard label="Total Tasks" value={tasks.length} icon="tasks" gradient="blue" />
+        <StatCard label="Completion Rate" value={`${tasks.length ? Math.round((tasks.filter((t) => t.status === "Completed").length / tasks.length) * 100) : 0}%`} icon="check" gradient="emerald" />
+        <StatCard label="Active Clients" value={clients.filter((c) => c.status === "Active").length} icon="store" gradient="violet" />
+        <StatCard label="Total Ad Spend" value={currency(totalSpend)} icon="dollar" gradient="amber" />
       </div>
 
       <div className="grid lg:grid-cols-2 gap-4 sm:gap-6">
@@ -1683,7 +1694,7 @@ export default function App() {
   const meta = VIEW_META[view] || VIEW_META.dashboard;
 
   return (
-    <div className="flex h-screen bg-slate-50 text-slate-800 antialiased overflow-hidden">
+    <div className="flex h-screen bg-gradient-to-br from-slate-50 via-blue-50/40 to-slate-50 text-slate-800 antialiased overflow-hidden">
       <Sidebar currentUser={currentUser} activeView={view} setActiveView={setActiveView} open={sidebarOpen} setOpen={setSidebarOpen} onLogout={logout} />
 
       <div className="flex-1 flex flex-col min-w-0">
