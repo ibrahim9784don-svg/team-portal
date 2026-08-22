@@ -674,6 +674,7 @@ function TeamDashboard({ currentUser, clients, tasks, setActiveView }) {
   const pending = myTasks.filter((t) => t.status === "Pending").length;
   const inProgress = myTasks.filter((t) => t.status === "In Progress").length;
   const completed = myTasks.filter((t) => t.status === "Completed").length;
+  const activeClients = clients.filter((c) => c.status === "Active").length;
 
   const upcoming = [...myTasks]
     .filter((t) => t.status !== "Completed")
@@ -683,7 +684,7 @@ function TeamDashboard({ currentUser, clients, tasks, setActiveView }) {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <StatCard label="My Clients" value={myClients.length} icon="store" gradient="blue" />
+        <StatCard label="Total Clients" value={clients.length} icon="store" gradient="blue" sub={`${activeClients} active`} />
         <StatCard label="Pending" value={pending} icon="tasks" gradient="pink" />
         <StatCard label="In Progress" value={inProgress} icon="tasks" gradient="cyan" />
         <StatCard label="Completed" value={completed} icon="check" gradient="emerald" />
@@ -720,7 +721,7 @@ function TeamDashboard({ currentUser, clients, tasks, setActiveView }) {
 
         <Card className="p-5">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-slate-800">My Clients</h3>
+            <h3 className="font-semibold text-slate-800">My Assigned Clients</h3>
             <button onClick={() => setActiveView("clients")} className="text-xs text-blue-600 font-medium hover:underline">View all</button>
           </div>
           <div className="space-y-3">
@@ -738,6 +739,33 @@ function TeamDashboard({ currentUser, clients, tasks, setActiveView }) {
           </div>
         </Card>
       </div>
+
+      <Card className="p-5">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-semibold text-slate-800">All Clients by Status</h3>
+          <button onClick={() => setActiveView("clients")} className="text-xs text-blue-600 font-medium hover:underline">View all clients</button>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {CLIENT_STATUSES.map((status) => {
+            const list = clients.filter((c) => c.status === status);
+            const dot = { New: "bg-violet-500", Active: "bg-emerald-500", "On Hold": "bg-amber-500", Completed: "bg-slate-400" }[status];
+            return (
+              <button
+                key={status}
+                onClick={() => setActiveView("clients")}
+                className="text-left border border-slate-100 rounded-lg p-3 hover:border-slate-200 hover:bg-slate-50/60 transition"
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  <span className={`w-2 h-2 rounded-full ${dot}`} />
+                  <span className="text-xs text-slate-500 font-medium">{status}</span>
+                </div>
+                <p className="text-2xl font-bold text-slate-800">{list.length}</p>
+                <p className="text-xs text-slate-400 truncate mt-0.5">{list.map((c) => c.name).slice(0, 2).join(", ") || "—"}{list.length > 2 ? ` +${list.length - 2} more` : ""}</p>
+              </button>
+            );
+          })}
+        </div>
+      </Card>
     </div>
   );
 }
