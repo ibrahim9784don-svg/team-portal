@@ -475,7 +475,7 @@ function Sidebar({ currentUser, activeView, setActiveView, open, setOpen, onLogo
       >
         <div className="h-16 flex items-center gap-2.5 px-5 border-b border-slate-200 flex-shrink-0">
           <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-sm shadow-blue-200">
-            <Icon name="store" className="w-4.5 h-4.5 text-white" />
+            <Icon name="store" className="w-[18px] h-[18px] text-white" />
           </div>
           <span className="font-bold text-slate-800 text-sm leading-tight tracking-tight">Team Portal</span>
           <button className="ml-auto md:hidden text-slate-400" onClick={() => setOpen(false)}>
@@ -497,7 +497,7 @@ function Sidebar({ currentUser, activeView, setActiveView, open, setOpen, onLogo
                   active ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-sm shadow-blue-200" : "text-slate-600 hover:bg-slate-50"
                 }`}
               >
-                <Icon name={item.icon} className={`w-4.5 h-4.5 ${active ? "text-white" : "text-slate-400"}`} />
+                <Icon name={item.icon} className={`w-[18px] h-[18px] ${active ? "text-white" : "text-slate-400"}`} />
                 {item.label}
               </button>
             );
@@ -513,7 +513,7 @@ function Sidebar({ currentUser, activeView, setActiveView, open, setOpen, onLogo
             </div>
           </div>
           <button onClick={onLogout} className="w-full mt-1 flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-slate-500 hover:bg-slate-50 hover:text-red-600 transition">
-            <Icon name="logout" className="w-4.5 h-4.5" />
+            <Icon name="logout" className="w-[18px] h-[18px]" />
             Log out
           </button>
         </div>
@@ -636,6 +636,33 @@ function AdminDashboard({ clients, tasks, users, setActiveView }) {
           </div>
         </Card>
       </div>
+
+      <Card className="p-5">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-semibold text-slate-800">Clients by Status</h3>
+          <button onClick={() => setActiveView("clients")} className="text-xs text-blue-600 font-medium hover:underline">View all clients</button>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {CLIENT_STATUSES.map((status) => {
+            const list = clients.filter((c) => c.status === status);
+            const dot = { New: "bg-violet-500", Active: "bg-emerald-500", "On Hold": "bg-amber-500", Completed: "bg-slate-400" }[status];
+            return (
+              <button
+                key={status}
+                onClick={() => setActiveView("clients")}
+                className="text-left border border-slate-100 rounded-lg p-3 hover:border-slate-200 hover:bg-slate-50/60 transition"
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  <span className={`w-2 h-2 rounded-full ${dot}`} />
+                  <span className="text-xs text-slate-500 font-medium">{status}</span>
+                </div>
+                <p className="text-2xl font-bold text-slate-800">{list.length}</p>
+                <p className="text-xs text-slate-400 truncate mt-0.5">{list.map((c) => c.name).slice(0, 2).join(", ") || "—"}{list.length > 2 ? ` +${list.length - 2} more` : ""}</p>
+              </button>
+            );
+          })}
+        </div>
+      </Card>
     </div>
   );
 }
@@ -784,16 +811,53 @@ function ClientForm({ initial, onSave, onCancel }) {
   );
 }
 
-function ClientDetailModal({ client, tasks, users, open, onClose }) {
+function ClientDetailModal({ client, tasks, users, open, onClose, isAdmin, updateClients }) {
+  const [editingSpend, setEditingSpend] = useState(false);
+  const [spendValue, setSpendValue] = useState("");
+  useEffect(() => {
+    if (client) setSpendValue(String(client.monthlySpend || 0));
+    setEditingSpend(false);
+  }, [client]);
   if (!open || !client) return null;
   const clientTasks = tasks.filter((t) => t.clientId === client.id);
+  function saveSpend() {
+    const n = Number(spendValue);
+    updateClients((list) => list.map((c) => (c.id === client.id ? { ...c, monthlySpend: isNaN(n) ? 0 : n } : c)));
+    setEditingSpend(false);
+  }
   return (
     <Modal open={open} onClose={onClose} title={client.name} wide>
       <div className="grid sm:grid-cols-2 gap-4 text-sm">
         <div className="flex items-center gap-2 text-slate-600"><Icon name="mail" className="w-4 h-4 text-slate-400" /> {client.email}</div>
         <div className="flex items-center gap-2 text-slate-600"><Icon name="building" className="w-4 h-4 text-slate-400" /> {client.platform} — {client.storeUrl || "no URL set"}</div>
         <div className="flex items-center gap-2 text-slate-600"><Icon name="chart" className="w-4 h-4 text-slate-400" /> {client.adsAccount || "No ads account on file"}</div>
-        <div className="flex items-center gap-2 text-slate-600"><Icon name="dollar" className="w-4 h-4 text-slate-400" /> {currency(client.monthlySpend)}/mo ad spend</div>
+        <div className="flex items-center gap-2 text-slate-600">
+          <Icon name="dollar" className="w-4 h-4 text-slate-400 flex-shrink-0" />
+          {editingSpend ? (
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                min="0"
+                autoFocus
+                value={spendValue}
+                onChange={(e) => setSpendValue(e.target.value)}
+                className="w-28 border border-slate-300 rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200"
+              />
+              <span className="text-slate-500">/mo</span>
+              <button type="button" onClick={saveSpend} className="text-emerald-600 hover:text-emerald-700"><Icon name="check" className="w-4 h-4" /></button>
+              <button type="button" onClick={() => setEditingSpend(false)} className="text-slate-400 hover:text-slate-600"><Icon name="x" className="w-4 h-4" /></button>
+            </div>
+          ) : (
+            <span className="flex items-center gap-2">
+              {currency(client.monthlySpend)}/mo ad spend
+              {updateClients && (
+                <button type="button" onClick={() => setEditingSpend(true)} className="text-blue-600 hover:text-blue-700">
+                  <Icon name="edit" className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </span>
+          )}
+        </div>
       </div>
       {client.notes && (
         <div className="mt-4 bg-slate-50 border border-slate-100 rounded-lg p-3 text-sm text-slate-600">{client.notes}</div>
@@ -945,7 +1009,7 @@ function ClientsView({ currentUser, clients, tasks, users, updateClients, isAdmi
         <ClientForm initial={editing} onSave={handleSave} onCancel={() => setModalOpen(false)} />
       </Modal>
 
-      <ClientDetailModal client={viewing} tasks={tasks} users={users} open={!!viewing} onClose={() => setViewing(null)} />
+      <ClientDetailModal client={viewing} tasks={tasks} users={users} open={!!viewing} onClose={() => setViewing(null)} isAdmin={isAdmin} updateClients={updateClients} />
 
       <ConfirmDialog
         open={!!confirmDelete}
