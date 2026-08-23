@@ -903,6 +903,11 @@ function ClientDetailModal({ client, tasks, users, open, onClose, isAdmin, updat
   }
   return (
     <Modal open={open} onClose={onClose} title={client.name} wide>
+      {client.addedByRole === "team" && client.addedBy && (
+        <div className="mb-3 flex items-center gap-2 text-xs font-medium text-violet-700 bg-violet-50 border border-violet-200 rounded-lg px-3 py-2">
+          <Icon name="users" className="w-3.5 h-3.5" /> Added by {client.addedBy} (team){client.createdAt ? ` on ${formatDate(client.createdAt)}` : ""}
+        </div>
+      )}
       <div className="grid sm:grid-cols-2 gap-4 text-sm">
         <div className="flex items-center gap-2 text-slate-600"><Icon name="mail" className="w-4 h-4 text-slate-400" /> {client.email}</div>
         <div className="flex items-center gap-2 text-slate-600"><Icon name="building" className="w-4 h-4 text-slate-400" /> {client.platform} — {client.storeUrl || "no URL set"}</div>
@@ -1021,7 +1026,7 @@ function ClientsView({ currentUser, clients, tasks, users, updateClients, isAdmi
     if (editing) {
       updateClients((list) => list.map((c) => (c.id === editing.id ? { ...editing, ...data } : c)));
     } else {
-      updateClients((list) => [...list, { id: uid("c"), ...data }]);
+      updateClients((list) => [...list, { id: uid("c"), addedBy: currentUser.name, addedByRole: currentUser.role, createdAt: new Date().toISOString().slice(0, 10), ...data }]);
     }
     setModalOpen(false);
   }
@@ -1072,6 +1077,11 @@ function ClientsView({ currentUser, clients, tasks, users, updateClients, isAdmi
                         <div className="min-w-0">
                           <p className="font-medium text-slate-800 truncate">{c.name}</p>
                           <p className="text-xs text-slate-400 truncate">{c.email}</p>
+                          {isAdmin && c.addedByRole === "team" && c.addedBy && (
+                            <span className="inline-flex items-center gap-1 mt-1 text-[11px] font-medium text-violet-700 bg-violet-50 border border-violet-200 rounded-full px-2 py-0.5">
+                              Added by {c.addedBy}
+                            </span>
+                          )}
                         </div>
                       </div>
                     </td>
