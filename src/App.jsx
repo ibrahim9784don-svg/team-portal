@@ -667,7 +667,7 @@ function AdminDashboard({ clients, tasks, users, setActiveView }) {
   );
 }
 
-function TeamDashboard({ currentUser, clients, tasks, setActiveView }) {
+function TeamDashboard({ currentUser, clients, tasks, setActiveView, updateTasks }) {
   const myTasks = tasks.filter((t) => t.assignedTo === currentUser.id);
   const myClientIds = [...new Set(myTasks.map((t) => t.clientId))];
   const myClients = clients.filter((c) => myClientIds.includes(c.id));
@@ -771,6 +771,15 @@ function TeamDashboard({ currentUser, clients, tasks, setActiveView }) {
                   <span className={`text-xs font-medium flex-shrink-0 ${days < 0 ? "text-red-600" : days <= 2 ? "text-amber-600" : "text-slate-400"}`}>
                     {days < 0 ? `${Math.abs(days)}d late` : days === 0 ? "Today" : `${days}d left`}
                   </span>
+                  {updateTasks && (
+                    <button
+                      type="button"
+                      onClick={() => updateTasks((list) => list.map((x) => (x.id === t.id ? { ...x, status: "Completed" } : x)))}
+                      className="flex-shrink-0 text-xs font-medium px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200"
+                    >
+                      Mark complete
+                    </button>
+                  )}
                 </div>
               );
             })}
@@ -1893,7 +1902,7 @@ export default function App() {
             (isAdmin ? (
               <AdminDashboard clients={data.clients} tasks={data.tasks} users={data.users} setActiveView={setActiveView} />
             ) : (
-              <TeamDashboard currentUser={currentUser} clients={data.clients} tasks={data.tasks} setActiveView={setActiveView} />
+              <TeamDashboard currentUser={currentUser} clients={data.clients} tasks={data.tasks} setActiveView={setActiveView} updateTasks={updateTasks} />
             ))}
 
           {view === "clients" && (
