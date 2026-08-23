@@ -742,6 +742,40 @@ function TeamDashboard({ currentUser, clients, tasks, setActiveView }) {
 
       <Card className="p-5">
         <div className="flex items-center justify-between mb-4">
+          <h3 className="font-semibold text-slate-800">My Pending Tasks</h3>
+          <button onClick={() => setActiveView("tasks")} className="text-xs text-blue-600 font-medium hover:underline">View all</button>
+        </div>
+        <div className="space-y-3">
+          {myTasks.filter((t) => t.status === "Pending").length === 0 && (
+            <p className="text-sm text-slate-400">No pending tasks — nice work!</p>
+          )}
+          {myTasks
+            .filter((t) => t.status === "Pending")
+            .sort((a, b) => new Date(a.deadline) - new Date(b.deadline))
+            .map((t) => {
+              const client = clients.find((c) => c.id === t.clientId);
+              const days = daysUntil(t.deadline);
+              return (
+                <div key={t.id} className="flex items-center gap-3 pb-3 border-b border-slate-100 last:border-0 last:pb-0">
+                  <div className="w-8 h-8 rounded-lg bg-pink-50 text-pink-600 flex items-center justify-center flex-shrink-0">
+                    <Icon name="tasks" className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-slate-700 truncate">{t.title}</p>
+                    <p className="text-xs text-slate-400 truncate">{client?.name || "—"}</p>
+                  </div>
+                  <PriorityBadge priority={t.priority} />
+                  <span className={`text-xs font-medium flex-shrink-0 ${days < 0 ? "text-red-600" : days <= 2 ? "text-amber-600" : "text-slate-400"}`}>
+                    {days < 0 ? `${Math.abs(days)}d late` : days === 0 ? "Today" : `${days}d left`}
+                  </span>
+                </div>
+              );
+            })}
+        </div>
+      </Card>
+
+      <Card className="p-5">
+        <div className="flex items-center justify-between mb-4">
           <h3 className="font-semibold text-slate-800">All Clients by Status</h3>
           <button onClick={() => setActiveView("clients")} className="text-xs text-blue-600 font-medium hover:underline">View all clients</button>
         </div>
