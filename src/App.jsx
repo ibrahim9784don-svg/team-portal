@@ -137,7 +137,7 @@ function initials(name) {
 }
 
 function currency(n) {
-  return "$" + Number(n || 0).toLocaleString();
+  return "AED " + Number(n || 0).toLocaleString();
 }
 
 /* ------------------------------------------------------------------ */
@@ -969,6 +969,18 @@ function ClientsView({ currentUser, clients, tasks, users, updateClients, isAdmi
   const [editing, setEditing] = useState(null);
   const [viewing, setViewing] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
+  const [editingSpendId, setEditingSpendId] = useState(null);
+  const [spendValue, setSpendValue] = useState("");
+
+  function startEditSpend(c) {
+    setEditingSpendId(c.id);
+    setSpendValue(String(c.monthlySpend || 0));
+  }
+  function saveSpend(c) {
+    const n = Number(spendValue);
+    updateClients((list) => list.map((x) => (x.id === c.id ? { ...x, monthlySpend: isNaN(n) ? 0 : n } : x)));
+    setEditingSpendId(null);
+  }
 
   const visibleClients = useMemo(() => {
     // Team members can see every client the admin has added (read-only) so
@@ -1052,7 +1064,41 @@ function ClientsView({ currentUser, clients, tasks, users, updateClients, isAdmi
                       </div>
                     </td>
                     <td className="px-5 py-3 text-slate-600">{c.platform}</td>
-                    <td className="px-5 py-3 text-slate-600">{currency(c.monthlySpend)}</td>
+                    <td className="px-5 py-3 text-slate-600">
+                      {editingSpendId === c.id ? (
+                        <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+                          <input
+                            type="number"
+                            min="0"
+                            autoFocus
+                            value={spendValue}
+                            onChange={(e) => setSpendValue(e.target.value)}
+                            onKeyDown={(e) => e.key === "Enter" && saveSpend(c)}
+                            className="w-20 border border-slate-300 rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200"
+                          />
+                          <button type="button" onClick={() => saveSpend(c)} className="text-emerald-600 hover:text-emerald-700">
+                            <Icon name="check" className="w-4 h-4" />
+                          </button>
+                          <button type="button" onClick={() => setEditingSpendId(null)} className="text-slate-400 hover:text-slate-600">
+                            <Icon name="x" className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ) : (
+                        <span className="flex items-center gap-1.5 group">
+                          {currency(c.monthlySpend)}
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              startEditSpend(c);
+                            }}
+                            className="text-slate-300 hover:text-blue-600"
+                          >
+                            <Icon name="edit" className="w-3.5 h-3.5" />
+                          </button>
+                        </span>
+                      )}
+                    </td>
                     <td className="px-5 py-3">
                       <select
                         value={c.status}
