@@ -1301,7 +1301,7 @@ function TaskForm({ initial, clients, teamMembers, onSave, onCancel }) {
     initial || {
       clientId: clients[0]?.id || "",
       assignedTo: teamMembers[0]?.id || "",
-      title: TASK_TYPES[0],
+      title: "",
       type: TASK_TYPES[0],
       description: "",
       priority: "Medium",
@@ -1338,17 +1338,14 @@ function TaskForm({ initial, clients, teamMembers, onSave, onCancel }) {
       <Field label="Task type">
         <Select
           value={form.type}
-          onChange={(e) => {
-            set("type", e.target.value);
-            set("title", e.target.value);
-          }}
+          onChange={(e) => set("type", e.target.value)}
         >
           {TASK_TYPES.map((t) => (
             <option key={t}>{t}</option>
           ))}
         </Select>
       </Field>
-      <Field label="Task title">
+      <Field label="Task title" hint="Write your own title for this task.">
         <TextInput required value={form.title} onChange={(e) => set("title", e.target.value)} placeholder="Short task title" />
       </Field>
       <Field label="Description">
