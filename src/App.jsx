@@ -740,10 +740,13 @@ function TeamDashboard({ currentUser, clients, tasks, setActiveView }) {
         </Card>
       </div>
 
-      <Card className="p-5">
+      <Card className="p-5 !border-red-200 bg-red-50/40">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="font-semibold text-slate-800">My Pending Tasks</h3>
-          <button onClick={() => setActiveView("tasks")} className="text-xs text-blue-600 font-medium hover:underline">View all</button>
+          <div>
+            <h3 className="font-semibold text-red-700">My Pending Tasks</h3>
+            <p className="text-xs text-red-500 mt-0.5">Assigned to you by admin — awaiting action</p>
+          </div>
+          <button onClick={() => setActiveView("tasks")} className="text-xs text-blue-600 font-medium hover:underline flex-shrink-0">View all</button>
         </div>
         <div className="space-y-3">
           {myTasks.filter((t) => t.status === "Pending").length === 0 && (
@@ -756,12 +759,12 @@ function TeamDashboard({ currentUser, clients, tasks, setActiveView }) {
               const client = clients.find((c) => c.id === t.clientId);
               const days = daysUntil(t.deadline);
               return (
-                <div key={t.id} className="flex items-center gap-3 pb-3 border-b border-slate-100 last:border-0 last:pb-0">
-                  <div className="w-8 h-8 rounded-lg bg-pink-50 text-pink-600 flex items-center justify-center flex-shrink-0">
+                <div key={t.id} className="flex items-center gap-3 pb-3 border-b border-red-100 last:border-0 last:pb-0 bg-white/70 rounded-lg px-3 py-2 border border-red-200">
+                  <div className="w-8 h-8 rounded-lg bg-red-100 text-red-600 flex items-center justify-center flex-shrink-0">
                     <Icon name="tasks" className="w-4 h-4" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-slate-700 truncate">{t.title}</p>
+                    <p className="text-sm font-medium text-red-700 truncate">{t.title}</p>
                     <p className="text-xs text-slate-400 truncate">{client?.name || "—"}</p>
                   </div>
                   <PriorityBadge priority={t.priority} />
