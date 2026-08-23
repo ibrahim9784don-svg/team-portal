@@ -894,6 +894,26 @@ function ClientDetailModal({ client, tasks, users, open, onClose, isAdmin, updat
         <div className="flex items-center gap-2 text-slate-600"><Icon name="building" className="w-4 h-4 text-slate-400" /> {client.platform} — {client.storeUrl || "no URL set"}</div>
         <div className="flex items-center gap-2 text-slate-600"><Icon name="chart" className="w-4 h-4 text-slate-400" /> {client.adsAccount || "No ads account on file"}</div>
         <div className="flex items-center gap-2 text-slate-600">
+          <Icon name="store" className="w-4 h-4 text-slate-400 flex-shrink-0" />
+          <span>Status:</span>
+          {updateClients ? (
+            <select
+              value={client.status}
+              onChange={(e) => updateClients((list) => list.map((c) => (c.id === client.id ? { ...c, status: e.target.value } : c)))}
+              className={`text-xs font-medium rounded-full px-2.5 py-1 border-0 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-200 ${
+                { New: "bg-violet-50 text-violet-700", Active: "bg-emerald-50 text-emerald-700", "On Hold": "bg-amber-50 text-amber-700", Completed: "bg-slate-100 text-slate-600" }[client.status] ||
+                "bg-slate-100 text-slate-600"
+              }`}
+            >
+              {CLIENT_STATUSES.map((s) => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
+          ) : (
+            <StatusBadge status={client.status} />
+          )}
+        </div>
+        <div className="flex items-center gap-2 text-slate-600">
           <Icon name="dollar" className="w-4 h-4 text-slate-400 flex-shrink-0" />
           {editingSpend ? (
             <div className="flex items-center gap-2">
@@ -1034,23 +1054,19 @@ function ClientsView({ currentUser, clients, tasks, users, updateClients, isAdmi
                     <td className="px-5 py-3 text-slate-600">{c.platform}</td>
                     <td className="px-5 py-3 text-slate-600">{currency(c.monthlySpend)}</td>
                     <td className="px-5 py-3">
-                      {isAdmin ? (
-                        <select
-                          value={c.status}
-                          onClick={(e) => e.stopPropagation()}
-                          onChange={(e) => updateClients((list) => list.map((x) => (x.id === c.id ? { ...x, status: e.target.value } : x)))}
-                          className={`text-xs font-medium rounded-full px-2.5 py-1 border-0 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-200 ${
-                            { New: "bg-violet-50 text-violet-700", Active: "bg-emerald-50 text-emerald-700", "On Hold": "bg-amber-50 text-amber-700", Completed: "bg-slate-100 text-slate-600" }[c.status] ||
-                            "bg-slate-100 text-slate-600"
-                          }`}
-                        >
-                          {CLIENT_STATUSES.map((s) => (
-                            <option key={s} value={s}>{s}</option>
-                          ))}
-                        </select>
-                      ) : (
-                        <StatusBadge status={c.status} />
-                      )}
+                      <select
+                        value={c.status}
+                        onClick={(e) => e.stopPropagation()}
+                        onChange={(e) => updateClients((list) => list.map((x) => (x.id === c.id ? { ...x, status: e.target.value } : x)))}
+                        className={`text-xs font-medium rounded-full px-2.5 py-1 border-0 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-200 ${
+                          { New: "bg-violet-50 text-violet-700", Active: "bg-emerald-50 text-emerald-700", "On Hold": "bg-amber-50 text-amber-700", Completed: "bg-slate-100 text-slate-600" }[c.status] ||
+                          "bg-slate-100 text-slate-600"
+                        }`}
+                      >
+                        {CLIENT_STATUSES.map((s) => (
+                          <option key={s} value={s}>{s}</option>
+                        ))}
+                      </select>
                     </td>
                     <td className="px-5 py-3">
                       <div className="flex justify-end gap-1">
