@@ -808,7 +808,7 @@ function TeamDashboard({ currentUser, clients, tasks, setActiveView }) {
 /*  Clients view                                                        */
 /* ------------------------------------------------------------------ */
 
-function ClientForm({ initial, onSave, onCancel }) {
+function ClientForm({ initial, onSave, onCancel, isAdmin }) {
   const [form, setForm] = useState(
     initial || { name: "", email: "", password: "", platform: "Shopify", storeUrl: "", adsAccount: "", monthlySpend: "", status: "New", notes: "" }
   );
@@ -831,9 +831,11 @@ function ClientForm({ initial, onSave, onCancel }) {
         </Field>
       </div>
       <div className="grid sm:grid-cols-2 gap-4">
-        <Field label="Password" hint="Store/account login the team may need.">
-          <TextInput value={form.password} onChange={(e) => set("password", e.target.value)} placeholder="••••••••" />
-        </Field>
+        {isAdmin && (
+          <Field label="Password" hint="Store/account login the team may need.">
+            <TextInput value={form.password} onChange={(e) => set("password", e.target.value)} placeholder="••••••••" />
+          </Field>
+        )}
         <Field label="Status">
           <Select value={form.status} onChange={(e) => set("status", e.target.value)}>
             {CLIENT_STATUSES.map((s) => (
@@ -1029,11 +1031,9 @@ function ClientsView({ currentUser, clients, tasks, users, updateClients, isAdmi
             <option key={s}>{s}</option>
           ))}
         </Select>
-        {isAdmin && (
-          <PrimaryButton onClick={openAdd} className="sm:ml-auto">
-            <Icon name="plus" className="w-4 h-4" /> Add client
-          </PrimaryButton>
-        )}
+        <PrimaryButton onClick={openAdd} className="sm:ml-auto">
+          <Icon name="plus" className="w-4 h-4" /> Add client
+        </PrimaryButton>
       </div>
 
       <Card className="overflow-hidden">
@@ -1117,7 +1117,7 @@ function ClientsView({ currentUser, clients, tasks, users, updateClients, isAdmi
                     <td className="px-5 py-3">
                       <div className="flex justify-end gap-1">
                         <IconButton icon="eye" label="View" onClick={() => setViewing(c)} />
-                        {isAdmin && <IconButton icon="edit" label="Edit" onClick={() => openEdit(c)} />}
+                        <IconButton icon="edit" label="Edit" onClick={() => openEdit(c)} />
                         {isAdmin && <IconButton icon="trash" label="Delete" className="hover:text-red-600 hover:bg-red-50" onClick={() => setConfirmDelete(c)} />}
                       </div>
                     </td>
@@ -1130,7 +1130,7 @@ function ClientsView({ currentUser, clients, tasks, users, updateClients, isAdmi
       </Card>
 
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={editing ? "Edit client" : "Add client"} wide>
-        <ClientForm initial={editing} onSave={handleSave} onCancel={() => setModalOpen(false)} />
+        <ClientForm initial={editing} onSave={handleSave} onCancel={() => setModalOpen(false)} isAdmin={isAdmin} />
       </Modal>
 
       <ClientDetailModal client={viewing} tasks={tasks} users={users} open={!!viewing} onClose={() => setViewing(null)} isAdmin={isAdmin} updateClients={updateClients} />
